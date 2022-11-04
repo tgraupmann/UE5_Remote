@@ -1,6 +1,7 @@
 node_modules
 package-lock.json
+.vs
+Binaries
 DerivedDataCache
 Intermediate
 Saved
-UE5_Remote

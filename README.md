@@ -24,6 +24,10 @@ The HTML5 client uses a WebSocket client to receive binary images and display in
 
 ![image_1](images/image_1.png)
 
+### UE5 Remote Host
+
+The [Unreal Remote Host](UE5_Remote/UE5_Remote.uproject) is an UE5 project that uses a render texture and a WebSocket client to send binary image data to clients. Clients display the binary images and can send inputs back to the host to control the character. The UE5 project extends the third person perspective game template.
+
 ## Unit Tests
 
 * [Server/sendImage.js](Server/sendImage.js) sends an image to the `WebSocket Server` that the client displays.
