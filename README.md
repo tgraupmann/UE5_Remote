@@ -126,6 +126,10 @@ if (CaptureComp)
 
 ![image_5](images/image_5.png)
 
+* Set the `Capture Source` to `Final Color (LDR) in RGB`.
+
+![image_6](images/image_6.png)
+
 * Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
 
 Add BP Functions:

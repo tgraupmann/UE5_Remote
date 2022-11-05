@@ -1,3 +1,4 @@
+const fs = require('fs'); //debugging
 const WebSocket = require('ws');
 
 const wss = new WebSocket.WebSocketServer({ port: 8080 });
@@ -9,6 +10,14 @@ wss.on('connection', function connection(ws) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         console.log(new Date(), 'Send data to clients', data.length, 'bytes');
         client.send(data);
+
+        /*
+        fs.writeFile('test.png', data, null, function (err) {
+          if (err) {
+            return console.log(new Date(), 'Failed to write!', err);
+          }
+        });
+        */
       }
     });
   });
