@@ -1,6 +1,10 @@
 # UE5_Remote
 
-POC - Video Streaming with UE5
+This UE5 project uses a scene capture component on the character to send render textures through a WebSocket to the browser. The browser sends input back to UE5 so that the project can be interacted with on a remote machine or any device.
+
+**Overview Video**
+
+<a target="_blank" href="https://youtu.be/6XeScY7OwvY"><img src="https://img.youtube.com/vi/6XeScY7OwvY/0.jpg"></a>
 
 ## Components
 
