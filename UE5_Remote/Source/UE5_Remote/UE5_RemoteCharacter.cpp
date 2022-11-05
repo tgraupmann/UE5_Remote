@@ -21,6 +21,14 @@
 
 AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 {
+	InjectKeyW = false;
+	InjectKeyA = false;
+	InjectKeyS = false;
+	InjectKeyD = false;
+
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -209,7 +217,7 @@ void AUE5_RemoteCharacter::BeginPlay()
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, bWasClean ? FColor::Green : FColor::Red, "Connection closed " + Reason);
 		});
 
-	WebSocket->OnMessage().AddLambda([](const FString& MessageString)
+	WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
 		{
 			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
 			TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
@@ -230,18 +238,23 @@ void AUE5_RemoteCharacter::BeginPlay()
 						{
 							if (Key.Equals("w"))
 							{
+								InjectKeyW = true;
 							}
 							else if (Key.Equals("a"))
 							{
+								InjectKeyA = true;
 							}
 							else if (Key.Equals("s"))
 							{
+								InjectKeyS = true;
 							}
 							else if (Key.Equals("d"))
 							{
+								InjectKeyD = true;
 							}
 							else if (Key.Equals("space"))
 							{
+								Jump();
 							}
 						}
 					}
@@ -252,18 +265,23 @@ void AUE5_RemoteCharacter::BeginPlay()
 						{
 							if (Key.Equals("w"))
 							{
+								InjectKeyW = false;
 							}
 							else if (Key.Equals("a"))
 							{
+								InjectKeyA = false;
 							}
 							else if (Key.Equals("s"))
 							{
+								InjectKeyS = false;
 							}
 							else if (Key.Equals("d"))
 							{
+								InjectKeyD = false;
 							}
 							else if (Key.Equals("space"))
 							{
+								StopJumping();
 							}
 						}
 					}
@@ -286,6 +304,29 @@ void AUE5_RemoteCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+// Called every frame
+void AUE5_RemoteCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (InjectKeyW)
+	{
+		MoveForward(1);
+	}
+	else if (InjectKeyA)
+	{
+		MoveRight(-1);
+	}
+	else if (InjectKeyS)
+	{
+		MoveForward(-1);
+	}
+	else if (InjectKeyD)
+	{
+		MoveRight(1);
+	}
 }
 
 void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)

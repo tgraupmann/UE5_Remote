@@ -40,6 +40,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 
@@ -47,6 +48,11 @@ protected:
 	USceneCaptureComponent2D* CaptureComp;
 
 	TSharedPtr<IWebSocket> WebSocket;
+
+	bool InjectKeyW;
+	bool InjectKeyA;
+	bool InjectKeyS;
+	bool InjectKeyD;
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);

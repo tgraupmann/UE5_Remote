@@ -439,6 +439,146 @@ Go to `Edit->Editor Preferences->Miscellaneous` and disable the `Use Less CPU Wh
 
 ![image_10](images/image_10.png)
 
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
+
+Add protected data members that will be toggled from the WASD key socket events.
+
+```C++
+bool InjectKeyW;
+bool InjectKeyA;
+bool InjectKeyS;
+bool InjectKeyD;
+```
+
+This also will need an update tick to inject the input.
+
+```C++
+virtual void Tick(float DeltaTime) override;
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+Initialize the data members and turn on the tick event.
+
+```C++
+AUE5_RemoteCharacter::AUE5_RemoteCharacter()
+{
+ InjectKeyW = false;
+ InjectKeyA = false;
+ InjectKeyS = false;
+ InjectKeyD = false;
+
+ // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ PrimaryActorTick.bCanEverTick = true;
+```
+
+Add a tick event to inject input:
+
+```C++
+// Called every frame
+void AUE5_RemoteCharacter::Tick(float DeltaTime)
+{
+ Super::Tick(DeltaTime);
+
+ if (InjectKeyW)
+ {
+  MoveForward(1);
+ }
+ else if (InjectKeyA)
+ {
+  MoveRight(-1);
+ }
+ else if (InjectKeyS)
+ {
+  MoveForward(-1);
+ }
+ else if (InjectKeyD)
+ {
+  MoveRight(1);
+ }
+}
+```
+
+Toggle WASD key injection from the socket message:
+
+```C++
+WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
+{
+  TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+  TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
+  if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
+  {
+  FString InputString;
+  if (JsonObject->TryGetStringField("input", InputString))
+  {
+    if (InputString.Equals("mouse"))
+    {
+    int32 X = JsonObject->GetIntegerField("x");
+    int32 Y = JsonObject->GetIntegerField("y");
+    }
+    else if (InputString.Equals("keydown"))
+    {
+    FString Key;
+    if (JsonObject->TryGetStringField("key", Key))
+    {
+      if (Key.Equals("w"))
+      {
+      InjectKeyW = true;
+      }
+      else if (Key.Equals("a"))
+      {
+      InjectKeyA = true;
+      }
+      else if (Key.Equals("s"))
+      {
+      InjectKeyS = true;
+      }
+      else if (Key.Equals("d"))
+      {
+      InjectKeyD = true;
+      }
+      else if (Key.Equals("space"))
+      {
+      Jump();
+      }
+    }
+    }
+    else if (InputString.Equals("keyup"))
+    {
+    FString Key;
+    if (JsonObject->TryGetStringField("key", Key))
+    {
+      if (Key.Equals("w"))
+      {
+      InjectKeyW = false;
+      }
+      else if (Key.Equals("a"))
+      {
+      InjectKeyA = false;
+      }
+      else if (Key.Equals("s"))
+      {
+      InjectKeyS = false;
+      }
+      else if (Key.Equals("d"))
+      {
+      InjectKeyD = false;
+      }
+      else if (Key.Equals("space"))
+      {
+      StopJumping();
+      }
+    }
+    }
+  }
+  }
+  else
+  {
+  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
+  }
+});
+```
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
