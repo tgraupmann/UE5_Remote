@@ -1,5 +1,12 @@
 console.log('Script version 1.0');
 
+var countFPS = 0;
+
+setInterval(function () {
+  lblFPS.innerText = countFPS;
+  countFPS = 0;
+}, 1000);
+
 function handleOnMessage(event) {
   let data = event.data;
 
@@ -7,6 +14,7 @@ function handleOnMessage(event) {
   reader.onload = function (e2) {
     let url = e2.target.result;
     imgVideo.src = url;
+    ++countFPS;
   }
   reader.readAsDataURL(data); // read the blob into a url
 }
