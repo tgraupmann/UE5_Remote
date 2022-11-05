@@ -324,3 +324,19 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
  }
 }
 ```
+
+## Blueprints
+
+* Updated [UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset](UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset) - Event Graph
+
+* The `SetupRenderTexture` custom event sets up the RenderTexture called from the `EventPlay` event.
+
+![image_7](images/image_7.png)
+
+* The `SendRenderTextureToWebSocket` custom event sends image data limited by the `RefreshRate` variable.
+
+![image_8](images/image_8.png)
+
+* The `EventTick` calls the custom event.
+
+![image_9](images/image_9.png)
