@@ -345,3 +345,7 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
 * The `EventTick` calls the custom event.
 
 ![image_9](images/image_9.png)
+
+## Support
+
+Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
