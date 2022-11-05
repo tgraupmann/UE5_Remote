@@ -614,7 +614,7 @@ Here you can see a example of output from [UpscalerJS](https://upscalerjs.com/).
 
 * Before: (Original size: 480x270)
 
-![image_1](client/images/image_1.png)
+![image_1](Client/images/image_1.png)
 
 * After: (Upscaled size: 1920x1080)
 
