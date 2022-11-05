@@ -248,13 +248,16 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
 
 			IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
 
-			TSharedPtr<IImageWrapper> PNGImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+			//TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::BMP); //crash probably too large
+			//TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG); // 10 FPS Max
+			TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::JPEG); // 30 FPS
 
-			PNGImageWrapper->SetRaw(RawData.GetData(), RawData.GetAllocatedSize(), Size.X, Size.Y, ERGBFormat::BGRA, 8);
+			ImageWrapper->SetRaw(RawData.GetData(), RawData.GetAllocatedSize(), Size.X, Size.Y, ERGBFormat::BGRA, 8);
 
-			const TArray64<uint8>& PNGData = PNGImageWrapper->GetCompressed(100);
+			//const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(100); //largest size
+			const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(0); //smallest size
 
-			WebSocket->Send((void*)PNGData.GetData(), PNGData.GetAllocatedSize(), true);
+			WebSocket->Send((void*)ImageData.GetData(), ImageData.GetAllocatedSize(), true);
 		}
 	}
 	else
