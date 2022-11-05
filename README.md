@@ -22,7 +22,7 @@ node app.js
 
 The HTML5 client uses a WebSocket client to receive binary images and display in an img element.
 
-(*Future Feature*) WebSocket clients can send player input to the `Unreal Remote Host` by using WebSocket messages.
+WebSocket clients can send player input to the `Unreal Remote Host` by using WebSocket messages. Clients can inject keyboard and mouse input into the `Unreal Remote Host`.
 
 ![image_1](images/image_1.png)
 
