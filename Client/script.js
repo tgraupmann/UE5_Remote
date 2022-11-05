@@ -67,4 +67,75 @@ function connectStreamSocket() {
   }
 }
 
+document.body.addEventListener('keydown', function (evt) {
+  if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
+    return; // connection closed
+  }
+  let sendJson;
+  switch (evt.key.toLowerCase()) {
+    case 'w':
+    case 'a':
+    case 's':
+    case 'd':
+      //console.log(new Date(), 'keydown', evt.key);
+      sendJson = JSON.stringify({
+        input: "keydown",
+        key: evt.key
+      });
+      streamSocket.send(sendJson);
+      break;
+    case ' ':
+      //console.log(new Date(), 'keydown', 'space');
+      sendJson = JSON.stringify({
+        input: "keydown",
+        key: "space"
+      });
+      streamSocket.send(sendJson);
+      break;
+  }
+});
+
+document.body.addEventListener('keyup', function (evt) {
+  if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
+    return; // connection closed
+  }
+  let sendJson;
+  switch (evt.key.toLowerCase()) {
+    case 'w':
+    case 'a':
+    case 's':
+    case 'd':
+      //console.log(new Date(), 'keydown', evt.key);
+      sendJson = JSON.stringify({
+        input: "keyup",
+        key: evt.key
+      });
+      streamSocket.send(sendJson);
+      break;
+    case ' ':
+      //console.log(new Date(), 'keydown', 'space');
+      sendJson = JSON.stringify({
+        input: "keyup",
+        key: "space"
+      });
+      streamSocket.send(sendJson);
+      break;
+  }
+});
+
+divFullScreen.addEventListener('mousemove', function (evt) {
+  if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
+    return; // connection closed
+  }
+  console.log('mouseover', evt.offsetX, evt.offsetY, evt);
+  if (evt.offsetX != 0 && evt.offsetY != 0) {
+    let sendJson = JSON.stringify({
+      input: "mouse",
+      x: evt.offsetX,
+      y: evt.offsetY,
+    });
+    streamSocket.send(sendJson);
+  }
+});
+
 connectStreamSocket();
