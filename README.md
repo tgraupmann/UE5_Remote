@@ -4,7 +4,9 @@ This UE5 project uses a scene capture component on the character to send render 
 
 **Overview Video**
 
+<div style="display: flex; flex-direction: row; justify-content: center; align-content: center; border: 2px solid red; padding: 5px; background: gray">
 <a target="_blank" href="https://youtu.be/6XeScY7OwvY"><img src="https://img.youtube.com/vi/6XeScY7OwvY/0.jpg"></a>
+</div>
 
 ## Components
 
