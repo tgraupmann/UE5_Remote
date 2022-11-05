@@ -20,7 +20,7 @@ node app.js
 
 ### HTML5 Client
 
-The HTML5 client uses a WebSocket client to receive binary images and display in an img element. The HTML5 client can also send input to the host by using WebSocket messages.
+The HTML5 client uses a WebSocket client to receive binary images and display in an img element. *Future* The HTML5 client can also send input to the host by using WebSocket messages.
 
 ![image_1](images/image_1.png)
 
@@ -184,12 +184,6 @@ Add headers:
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "RenderUtils.h"
-```
-
-Add implementation for sending `PNG` bytes to WebSocket server.
-
-```C++
-
 ```
 
 * Add `ImageWrapper`, `RenderCore`, and `RHI` modules to [UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs](UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs)
