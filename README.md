@@ -33,3 +33,48 @@ The [Unreal Remote Host](UE5_Remote/UE5_Remote.uproject) is an UE5 project that 
 * [Server/sendImage.js](Server/sendImage.js) sends an image to the `WebSocket Server` that the client displays.
 
 ![image_2](images/image_2.png)
+
+## Change Log
+
+* Added [UE5_Remote/Content/UI/BPWidget_UI.uasset](UE5_Remote/Content/UI/BPWidget_UI.uasset) - BP Widget
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
+
+Add RenderTarget include:
+
+```C++
+#include "Engine/CanvasRenderTarget2D.h"
+```
+
+Add BP Function:
+
+```C++
+ UFUNCTION(BlueprintCallable, Category = "Camera")
+ UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+Implement function:
+
+```C++
+UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 width, const int32 height)
+{
+ UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
+
+ RenderTarget->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+
+ RenderTarget->InitAutoFormat(width, height);
+ RenderTarget->UpdateResourceImmediate(true);
+
+ return RenderTarget;
+}
+```
+
+* Updated [UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset](UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset) - Event Graph
+
+* BeginPlay: calls `InitUI` and `SetupRenderTexture` custom events.
+
+* InitUI: Loads UI BP Widget and saves to `Widget` variable.
+
+* SetupRenderTexture: Creates `UTextureRenderTarget2D` and saves to `RenderTexture` variable.

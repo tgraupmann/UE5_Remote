@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Engine/CanvasRenderTarget2D.h"
 #include "UE5_RemoteCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -24,6 +25,9 @@ public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
 
 protected:
 

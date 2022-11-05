@@ -127,3 +127,15 @@ void AUE5_RemoteCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+
+UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 width, const int32 height)
+{
+	UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
+
+	RenderTarget->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+
+	RenderTarget->InitAutoFormat(width, height);
+	RenderTarget->UpdateResourceImmediate(true);
+
+	return RenderTarget;
+}
