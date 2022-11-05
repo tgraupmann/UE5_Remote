@@ -7,6 +7,16 @@ setInterval(function () {
   countFPS = 0;
 }, 1000);
 
+function openFullscreen() {
+  if (divFullScreen.requestFullscreen) {
+    divFullScreen.requestFullscreen();
+  } else if (divFullScreen.webkitRequestFullscreen) { /* Safari */
+    divFullScreen.webkitRequestFullscreen();
+  } else if (divFullScreen.msRequestFullscreen) { /* IE11 */
+    divFullScreen.msRequestFullscreen();
+  }
+}
+
 function handleOnMessage(event) {
   let data = event.data;
 
