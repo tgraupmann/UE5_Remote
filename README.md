@@ -346,6 +346,93 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
 
 ![image_9](images/image_9.png)
 
+## WebSocket Input
+
+* Add `Json` module to [UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs](UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs)
+
+```C#
+PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "ImageWrapper", "RenderCore", "RHI", "WebSockets", "Json" });
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+Add includes for `Json`:
+
+```C++
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+```
+
+Update OnMessage with `Json` parsing:
+
+```C++
+WebSocket->OnMessage().AddLambda([](const FString& MessageString)
+  {
+   TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+   TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
+   if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
+   {
+    FString InputString;
+    if (JsonObject->TryGetStringField("input", InputString))
+    {
+     if (InputString.Equals("mouse"))
+     {
+      int32 X = JsonObject->GetIntegerField("x");
+      int32 Y = JsonObject->GetIntegerField("y");
+     }
+     else if (InputString.Equals("keydown"))
+     {
+      FString Key;
+      if (JsonObject->TryGetStringField("key", Key))
+      {
+       if (Key.Equals("w"))
+       {
+       }
+       else if (Key.Equals("a"))
+       {
+       }
+       else if (Key.Equals("s"))
+       {
+       }
+       else if (Key.Equals("d"))
+       {
+       }
+       else if (Key.Equals("space"))
+       {
+       }
+      }
+     }
+     else if (InputString.Equals("keyup"))
+     {
+      FString Key;
+      if (JsonObject->TryGetStringField("key", Key))
+      {
+       if (Key.Equals("w"))
+       {
+       }
+       else if (Key.Equals("a"))
+       {
+       }
+       else if (Key.Equals("s"))
+       {
+       }
+       else if (Key.Equals("d"))
+       {
+       }
+       else if (Key.Equals("space"))
+       {
+       }
+      }
+     }
+    }
+   }
+   else
+   {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
+   }
+  });
+```
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.

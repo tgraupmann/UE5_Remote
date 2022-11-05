@@ -13,6 +13,8 @@
 #include "IImageWrapperModule.h"
 #include "RenderUtils.h"
 #include "WebSocketsModule.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE5_RemoteCharacter
@@ -209,7 +211,68 @@ void AUE5_RemoteCharacter::BeginPlay()
 
 	WebSocket->OnMessage().AddLambda([](const FString& MessageString)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, MessageString);
+			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+			TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
+			if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
+			{
+				FString InputString;
+				if (JsonObject->TryGetStringField("input", InputString))
+				{
+					if (InputString.Equals("mouse"))
+					{
+						int32 X = JsonObject->GetIntegerField("x");
+						int32 Y = JsonObject->GetIntegerField("y");
+					}
+					else if (InputString.Equals("keydown"))
+					{
+						FString Key;
+						if (JsonObject->TryGetStringField("key", Key))
+						{
+							if (Key.Equals("w"))
+							{
+							}
+							else if (Key.Equals("a"))
+							{
+							}
+							else if (Key.Equals("s"))
+							{
+							}
+							else if (Key.Equals("d"))
+							{
+							}
+							else if (Key.Equals("space"))
+							{
+							}
+						}
+					}
+					else if (InputString.Equals("keyup"))
+					{
+						FString Key;
+						if (JsonObject->TryGetStringField("key", Key))
+						{
+							if (Key.Equals("w"))
+							{
+							}
+							else if (Key.Equals("a"))
+							{
+							}
+							else if (Key.Equals("s"))
+							{
+							}
+							else if (Key.Equals("d"))
+							{
+							}
+							else if (Key.Equals("space"))
+							{
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
+			}
 		});
 
 	WebSocket->Connect();
