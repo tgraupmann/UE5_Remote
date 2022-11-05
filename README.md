@@ -484,13 +484,14 @@ void AUE5_RemoteCharacter::Tick(float DeltaTime)
  {
   MoveForward(1);
  }
- else if (InjectKeyA)
- {
-  MoveRight(-1);
- }
  else if (InjectKeyS)
  {
   MoveForward(-1);
+ }
+ 
+ if (InjectKeyA)
+ {
+  MoveRight(-1);
  }
  else if (InjectKeyD)
  {
@@ -523,23 +524,23 @@ WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
     {
       if (Key.Equals("w"))
       {
-      InjectKeyW = true;
+        InjectKeyW = true;
       }
       else if (Key.Equals("a"))
       {
-      InjectKeyA = true;
+        InjectKeyA = true;
       }
       else if (Key.Equals("s"))
       {
-      InjectKeyS = true;
+        InjectKeyS = true;
       }
       else if (Key.Equals("d"))
       {
-      InjectKeyD = true;
+        InjectKeyD = true;
       }
       else if (Key.Equals("space"))
       {
-      Jump();
+        Jump();
       }
     }
     }
@@ -550,23 +551,23 @@ WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
     {
       if (Key.Equals("w"))
       {
-      InjectKeyW = false;
+        InjectKeyW = false;
       }
       else if (Key.Equals("a"))
       {
-      InjectKeyA = false;
+        InjectKeyA = false;
       }
       else if (Key.Equals("s"))
       {
-      InjectKeyS = false;
+        InjectKeyS = false;
       }
       else if (Key.Equals("d"))
       {
-      InjectKeyD = false;
+        InjectKeyD = false;
       }
       else if (Key.Equals("space"))
       {
-      StopJumping();
+        StopJumping();
       }
     }
     }
@@ -577,6 +578,19 @@ WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
   GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
   }
 });
+```
+
+Add mouse input by sending values to the mouse input actions from the socket message.
+
+```C++
+if (InputString.Equals("mouse"))
+{
+  int32 X = JsonObject->GetIntegerField("x");
+  int32 Y = JsonObject->GetIntegerField("y");
+
+  AddControllerYawInput(X);
+  AddControllerPitchInput(Y);
+}
 ```
 
 ## Support

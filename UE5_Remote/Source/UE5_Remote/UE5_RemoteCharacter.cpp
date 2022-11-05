@@ -230,6 +230,9 @@ void AUE5_RemoteCharacter::BeginPlay()
 					{
 						int32 X = JsonObject->GetIntegerField("x");
 						int32 Y = JsonObject->GetIntegerField("y");
+
+						AddControllerYawInput(X);
+						AddControllerPitchInput(Y);
 					}
 					else if (InputString.Equals("keydown"))
 					{
@@ -315,13 +318,14 @@ void AUE5_RemoteCharacter::Tick(float DeltaTime)
 	{
 		MoveForward(1);
 	}
-	else if (InjectKeyA)
-	{
-		MoveRight(-1);
-	}
 	else if (InjectKeyS)
 	{
 		MoveForward(-1);
+	}
+	
+	if (InjectKeyA)
+	{
+		MoveRight(-1);
 	}
 	else if (InjectKeyD)
 	{

@@ -123,18 +123,42 @@ document.body.addEventListener('keyup', function (evt) {
   }
 });
 
-divFullScreen.addEventListener('mousemove', function (evt) {
+var lastX = undefined;
+var lastY = undefined;
+var mouseX = undefined;
+var mouseY = undefined;
+
+// limit rate input events
+setInterval(function () {
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
-  console.log('mouseover', evt.offsetX, evt.offsetY, evt);
-  if (evt.offsetX != 0 && evt.offsetY != 0) {
-    let sendJson = JSON.stringify({
-      input: "mouse",
-      x: evt.offsetX,
-      y: evt.offsetY,
-    });
-    streamSocket.send(sendJson);
+  if (mouseX != 0 || mouseY != 0) {
+    if (mouseX != lastX || mouseY != lastY) {
+      lastX = mouseX;
+      lastY = mouseY;
+      let sendJson = JSON.stringify({
+        input: "mouse",
+        x: mouseX,
+        y: mouseY,
+      });
+      //console.log('send', sendJson);
+      streamSocket.send(sendJson);
+      mouseX = 0;
+      mouseY = 0;
+    }
+  }
+}, 33);
+
+divFullScreen.addEventListener('mousemove', function (evt) {
+  //console.log('mouseover', evt.movementX, evt.movementY, evt);
+  mouseX += evt.movementX / 8;
+  if (Number.isNaN(mouseX)) {
+    mouseX = 0;
+  }
+  mouseY += evt.movementY / 8;
+  if (Number.isNaN(mouseY)) {
+    mouseY = 0;
   }
 });
 
