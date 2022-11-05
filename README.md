@@ -606,6 +606,20 @@ if (InputString.Equals("mouse"))
 }
 ```
 
+## Upscaling
+
+AI Models can do fast super resolution upscaling on the 480x270 images to create HD resolution images in the client. This allows for faster framerates using lower bandwidth.
+
+Here you can see a example of output from [UpscalerJS](https://upscalerjs.com/).
+
+* Before: (Original size: 480x270)
+
+![image_1](client/images/image_1.png)
+
+* After: (Upscaled size: 1920x1080)
+
+![image_11](images/image_11.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
