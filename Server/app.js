@@ -12,4 +12,11 @@ wss.on('connection', function connection(ws) {
       }
     });
   });
+  ws.on('error', function (err) {
+    console.error(new Date(), 'WSS Error', err);
+  });
+});
+
+wss.on('error', function (err) {
+  console.error(new Date(), 'WSS Error', err);
 });

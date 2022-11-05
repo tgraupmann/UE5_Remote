@@ -96,7 +96,7 @@ USceneCaptureComponent2D* CaptureComp;
 
 * Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
 
-Include SceneCaptureComponent2DL
+Include SceneCaptureComponent2D:
 
 ```C++
 #include "Components/SceneCaptureComponent2D.h"
@@ -179,6 +179,7 @@ Add headers:
 #include "ImageUtils.h"
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
+#include "RenderUtils.h"
 ```
 
 Add implementation for sending `PNG` bytes to WebSocket server.
@@ -194,3 +195,134 @@ PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engi
 ```
 
 * Regenerate the Visual Studio project files after a module change.
+
+Include Websockets headers:
+
+```C++
+#include "WebSocketsModule.h"
+#include "IWebSocket.h"
+```
+
+* Add `WebSockets` module to [UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs](UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs)
+
+```C#
+PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "ImageWrapper", "RenderCore", "RHI", "WebSockets" });
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
+
+* Add include for `IWebSocket`
+
+```C++
+#include "IWebSocket.h"
+```
+
+* Add WebSocket protected data member.
+
+```C++
+TSharedPtr<IWebSocket> WebSocket;
+```
+
+* Override `BeginPlay` and `EndPlay`:
+
+```C++
+virtual void BeginPlay() override;
+
+virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+* Implement `BeginPlay`:
+
+```C++
+void AUE5_RemoteCharacter::BeginPlay()
+{
+ Super::BeginPlay();
+
+ if (!FModuleManager::Get().IsModuleLoaded("WebSockets"))
+ {
+  FModuleManager::Get().LoadModule("WebSockets");
+ }
+
+ WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080");
+
+ WebSocket->OnConnected().AddLambda([]()
+  {
+   GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Successfully connected");
+  });
+
+ WebSocket->OnConnectionError().AddLambda([](const FString& Error)
+  {
+   GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Error);
+  });
+
+ WebSocket->OnClosed().AddLambda([](int32 StatusCode, const FString& Reason, bool bWasClean)
+  {
+   GEngine->AddOnScreenDebugMessage(-1, 5.f, bWasClean ? FColor::Green : FColor::Red, "Connection closed " + Reason);
+  });
+
+ WebSocket->OnMessage().AddLambda([](const FString& MessageString)
+  {
+   GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, MessageString);
+  });
+
+ WebSocket->Connect();
+}
+```
+
+* Implement `EndPlay`:
+
+```C++
+void AUE5_RemoteCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ if (WebSocket->IsConnected())
+ {
+  WebSocket->Close();
+ }
+
+ Super::EndPlay(EndPlayReason);
+}
+```
+
+* Implement `SendRenderTexture`:
+
+```C++
+void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
+{
+ UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
+
+ if (WebSocket->IsConnected() && TextureRenderTarget)
+ {
+  if (TextureRenderTarget->GetFormat() != PF_B8G8R8A8)
+  {
+   EPixelFormat TextureFormat = TextureRenderTarget->GetFormat();
+   UE_LOG(LogTemp, Log, TEXT("Render Target is not in the expected format should be 'PF_B8G8R8A8' instead found '%s'!"),
+    GetPixelFormatString(TextureFormat));
+  }
+  else
+  {
+   check(TextureRenderTarget != nullptr);
+   FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
+   FIntPoint Size = RenderTarget->GetSizeXY();
+
+   TArray<uint8> RawData;
+   bool bSuccess = GetRawData(TextureRenderTarget, RawData);
+
+   IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+   TSharedPtr<IImageWrapper> PNGImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+
+   PNGImageWrapper->SetRaw(RawData.GetData(), RawData.GetAllocatedSize(), Size.X, Size.Y, ERGBFormat::BGRA, 8);
+
+   const TArray64<uint8>& PNGData = PNGImageWrapper->GetCompressed(100);
+
+   WebSocket->Send((void*)PNGData.GetData(), PNGData.GetAllocatedSize(), true);
+  }
+ }
+ else
+ {
+  UE_LOG(LogTemp, Log, TEXT("HTTP module not available!"));
+ }
+}
+```

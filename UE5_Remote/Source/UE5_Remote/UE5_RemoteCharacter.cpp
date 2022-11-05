@@ -12,6 +12,7 @@
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "RenderUtils.h"
+#include "WebSocketsModule.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE5_RemoteCharacter
@@ -180,18 +181,56 @@ bool AUE5_RemoteCharacter::GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint
 	return bReadSuccess;
 }
 
+void AUE5_RemoteCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!FModuleManager::Get().IsModuleLoaded("WebSockets"))
+	{
+		FModuleManager::Get().LoadModule("WebSockets");
+	}
+
+	WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080");
+
+	WebSocket->OnConnected().AddLambda([]()
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Successfully connected");
+		});
+
+	WebSocket->OnConnectionError().AddLambda([](const FString& Error)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Error);
+		});
+
+	WebSocket->OnClosed().AddLambda([](int32 StatusCode, const FString& Reason, bool bWasClean)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, bWasClean ? FColor::Green : FColor::Red, "Connection closed " + Reason);
+		});
+
+	WebSocket->OnMessage().AddLambda([](const FString& MessageString)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, MessageString);
+		});
+
+	WebSocket->Connect();
+}
+
+void AUE5_RemoteCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (WebSocket->IsConnected())
+	{
+		WebSocket->Close();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
 {
-	UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
+	//UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
 
-	// Switch from HTTP to WebSocket
-
-	//FHttpModule* Http = &FHttpModule::Get();
-	if (TextureRenderTarget /*&&
-		Http && Http->IsHttpEnabled() */)
+	if (WebSocket->IsConnected() && TextureRenderTarget)
 	{
-		//FHttpRequestPtr Request = Http->CreateRequest();
-
 		if (TextureRenderTarget->GetFormat() != PF_B8G8R8A8)
 		{
 			EPixelFormat TextureFormat = TextureRenderTarget->GetFormat();
@@ -215,22 +254,7 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
 
 			const TArray64<uint8>& PNGData = PNGImageWrapper->GetCompressed(100);
 
-			//Ar.Serialize((void*)PNGData.GetData(), PNGData.GetAllocatedSize());
-
-			if (bSuccess)
-			{
-				//Request->SetURL("ws://localhost:8080");
-
-				/*
-				Request->SetContent(data);
-
-				Request->OnProcessRequestComplete().BindUObject(this, &ARCCharacter::OnUploadRequestComplete);
-				if (!Request->ProcessRequest())
-				{
-					UE_LOG(LogTemp, Log, TEXT("HTTP failed to process request!"));
-				}
-				*/
-			}
+			WebSocket->Send((void*)PNGData.GetData(), PNGData.GetAllocatedSize(), true);
 		}
 	}
 	else

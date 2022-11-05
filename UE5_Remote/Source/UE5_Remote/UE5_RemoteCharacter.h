@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Engine/CanvasRenderTarget2D.h"
+#include "IWebSocket.h"
 #include "UE5_RemoteCharacter.generated.h"
 
 class USceneCaptureComponent2D;
@@ -37,10 +38,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Capture")
 	void SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget);
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USceneCaptureComponent2D* CaptureComp;
+
+	TSharedPtr<IWebSocket> WebSocket;
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
