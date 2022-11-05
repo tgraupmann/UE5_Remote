@@ -1,10 +1,16 @@
 console.log('Script version 1.0');
 
 var countFPS = 0;
+var dataPerSecond = 0;
+
+// ref: https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript
+function formatBytes(a, b = 2) { if (0 === a) return "0 Bytes"; const c = 0 > b ? 0 : b, d = Math.floor(Math.log(a) / Math.log(1024)); return parseFloat((a / Math.pow(1024, d)).toFixed(c)) + " " + ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"][d] }
 
 setInterval(function () {
   lblFPS.innerText = countFPS;
   countFPS = 0;
+  lblBytes.innerText = formatBytes(dataPerSecond);
+  dataPerSecond = 0;
 }, 1000);
 
 function openFullscreen() {
@@ -17,8 +23,11 @@ function openFullscreen() {
   }
 }
 
-function handleOnMessage(event) {
+async function handleOnMessage(event) {
   let data = event.data;
+
+  let buffer = await data.arrayBuffer();
+  dataPerSecond += Number(buffer.byteLength);
 
   let reader = new FileReader();
   reader.onload = function (e2) {
