@@ -433,6 +433,12 @@ WebSocket->OnMessage().AddLambda([](const FString& MessageString)
   });
 ```
 
+* Turn on RunInBackground so when the browser has focus the game still reacts quickly to input and rendering.
+
+Go to `Edit->Editor Preferences->Miscellaneous` and disable the `Use Less CPU When in Background` option.
+
+![image_10](images/image_10.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
