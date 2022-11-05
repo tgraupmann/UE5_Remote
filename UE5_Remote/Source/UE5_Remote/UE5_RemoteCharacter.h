@@ -53,6 +53,7 @@ protected:
 	bool InjectKeyA;
 	bool InjectKeyS;
 	bool InjectKeyD;
+	bool InjectKeySpace;
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);

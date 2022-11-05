@@ -448,6 +448,7 @@ bool InjectKeyW;
 bool InjectKeyA;
 bool InjectKeyS;
 bool InjectKeyD;
+bool InjectKeySpace;
 ```
 
 This also will need an update tick to inject the input.
@@ -467,6 +468,7 @@ AUE5_RemoteCharacter::AUE5_RemoteCharacter()
  InjectKeyA = false;
  InjectKeyS = false;
  InjectKeyD = false;
+ InjectKeySpace = false;
 
  // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
  PrimaryActorTick.bCanEverTick = true;
@@ -540,7 +542,11 @@ WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
       }
       else if (Key.Equals("space"))
       {
-        Jump();
+        if (!InjectKeySpace)
+        {
+         InjectKeySpace = true;
+         Jump();
+        }
       }
     }
     }
@@ -567,6 +573,7 @@ WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
       }
       else if (Key.Equals("space"))
       {
+        InjectKeySpace = false;
         StopJumping();
       }
     }

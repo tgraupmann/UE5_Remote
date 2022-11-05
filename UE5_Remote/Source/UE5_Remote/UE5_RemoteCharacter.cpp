@@ -25,6 +25,7 @@ AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 	InjectKeyA = false;
 	InjectKeyS = false;
 	InjectKeyD = false;
+	InjectKeySpace = false;
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -257,7 +258,11 @@ void AUE5_RemoteCharacter::BeginPlay()
 							}
 							else if (Key.Equals("space"))
 							{
-								Jump();
+								if (!InjectKeySpace)
+								{
+									InjectKeySpace = true;
+									Jump();
+								}
 							}
 						}
 					}
@@ -284,6 +289,7 @@ void AUE5_RemoteCharacter::BeginPlay()
 							}
 							else if (Key.Equals("space"))
 							{
+								InjectKeySpace = false;
 								StopJumping();
 							}
 						}
