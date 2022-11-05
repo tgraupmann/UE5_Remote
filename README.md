@@ -49,7 +49,7 @@ Add RenderTarget include:
 Add BP Function:
 
 ```C++
- UFUNCTION(BlueprintCallable, Category = "Camera")
+ UFUNCTION(BlueprintCallable, Category = "Capture")
  UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
 ```
 
@@ -78,3 +78,119 @@ UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 wid
 * InitUI: Loads UI BP Widget and saves to `Widget` variable.
 
 * SetupRenderTexture: Creates `UTextureRenderTarget2D` and saves to `RenderTexture` variable.
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
+
+Add class prototype:
+
+```C++
+class USceneCaptureComponent2D;
+```
+
+Add protected property for camera capture component:
+
+```C++
+UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+USceneCaptureComponent2D* CaptureComp;
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+Include SceneCaptureComponent2DL
+
+```C++
+#include "Components/SceneCaptureComponent2D.h"
+```
+
+Attach Capture Component to the Camera Boom:
+
+```C++
+CaptureComp = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("CaptureComp"));
+if (CaptureComp)
+{
+  CaptureComp->SetupAttachment(CameraBoom);
+}
+```
+
+* The BP Viewport will show the new capture component - [UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset](UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset)
+
+![image_3](images/image_3.png)
+
+* The texture target of the CaptureComponent has not been set yet.
+
+![image_4](images/image_4.png)
+
+* Create [UE5_Remote/Content/Materials/RenderTarget2D_Capture.uasset](UE5_Remote/Content/Materials/RenderTarget2D_Capture.uasset) render target at 480x270. This is 1/4 of 1080p by design.
+
+* Set the Texture Target to use the `RenderTarget2D_Capture` RenderTarget.
+
+![image_5](images/image_5.png)
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.h)
+
+Add BP Functions:
+
+```C++
+UFUNCTION(BlueprintCallable, Category = "Capture")
+bool GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData);
+
+UFUNCTION(BlueprintCallable, Category = "Capture")
+void SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget);
+```
+
+* Updated Source: [UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp](UE5_Remote/Source/UE5_Remote/UE5_RemoteCharacter.cpp)
+
+Add implementation for getting raw data bytes from render texture.
+
+```C++
+// From: C:\Program Files\Epic Games\UE_4.21\Engine\Source\Runtime\Engine\Private\ImageUtils.cpp
+bool AUE5_RemoteCharacter::GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData)
+{
+ FRenderTarget* RenderTarget = TexRT->GameThread_GetRenderTargetResource();
+ EPixelFormat Format = TexRT->GetFormat();
+
+ int32 ImageBytes = CalculateImageBytes(TexRT->SizeX, TexRT->SizeY, 0, Format);
+ RawData.AddUninitialized(ImageBytes);
+ bool bReadSuccess = false;
+ switch (Format)
+ {
+ case PF_FloatRGBA:
+ {
+  TArray<FFloat16Color> FloatColors;
+  bReadSuccess = RenderTarget->ReadFloat16Pixels(FloatColors);
+  FMemory::Memcpy(RawData.GetData(), FloatColors.GetData(), ImageBytes);
+ }
+ break;
+ case PF_B8G8R8A8:
+  bReadSuccess = RenderTarget->ReadPixelsPtr((FColor*)RawData.GetData());
+  break;
+ }
+ if (bReadSuccess == false)
+ {
+  RawData.Empty();
+ }
+ return bReadSuccess;
+}
+```
+
+Add headers:
+
+```C++
+#include "ImageUtils.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+```
+
+Add implementation for sending `PNG` bytes to WebSocket server.
+
+```C++
+
+```
+
+* Add `ImageWrapper`, `RenderCore`, and `RHI` modules to [UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs](UE5_Remote/Source/UE5_Remote/UE5_Remote.Build.cs)
+
+```C#
+PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "ImageWrapper", "RenderCore", "RHI" });
+```
+
+* Regenerate the Visual Studio project files after a module change.

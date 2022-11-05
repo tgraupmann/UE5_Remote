@@ -7,6 +7,8 @@
 #include "Engine/CanvasRenderTarget2D.h"
 #include "UE5_RemoteCharacter.generated.h"
 
+class USceneCaptureComponent2D;
+
 UCLASS(config=Game)
 class AUE5_RemoteCharacter : public ACharacter
 {
@@ -26,10 +28,19 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
 
-	UFUNCTION(BlueprintCallable, Category = "Camera")
+	UFUNCTION(BlueprintCallable, Category = "Capture")
 	UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
 
+	UFUNCTION(BlueprintCallable, Category = "Capture")
+	bool GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData);
+
+	UFUNCTION(BlueprintCallable, Category = "Capture")
+	void SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget);
+
 protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	USceneCaptureComponent2D* CaptureComp;
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);

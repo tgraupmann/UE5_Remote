@@ -4,9 +4,14 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "ImageUtils.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+#include "RenderUtils.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE5_RemoteCharacter
@@ -41,6 +46,12 @@ AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+
+	CaptureComp = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("CaptureComp"));
+	if (CaptureComp)
+	{
+		CaptureComp->SetupAttachment(CameraBoom);
+	}
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -138,4 +149,92 @@ UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 wid
 	RenderTarget->UpdateResourceImmediate(true);
 
 	return RenderTarget;
+}
+
+// From: C:\Program Files\Epic Games\UE_4.21\Engine\Source\Runtime\Engine\Private\ImageUtils.cpp
+bool AUE5_RemoteCharacter::GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData)
+{
+	FRenderTarget* RenderTarget = TexRT->GameThread_GetRenderTargetResource();
+	EPixelFormat Format = TexRT->GetFormat();
+
+	int32 ImageBytes = CalculateImageBytes(TexRT->SizeX, TexRT->SizeY, 0, Format);
+	RawData.AddUninitialized(ImageBytes);
+	bool bReadSuccess = false;
+	switch (Format)
+	{
+	case PF_FloatRGBA:
+	{
+		TArray<FFloat16Color> FloatColors;
+		bReadSuccess = RenderTarget->ReadFloat16Pixels(FloatColors);
+		FMemory::Memcpy(RawData.GetData(), FloatColors.GetData(), ImageBytes);
+	}
+	break;
+	case PF_B8G8R8A8:
+		bReadSuccess = RenderTarget->ReadPixelsPtr((FColor*)RawData.GetData());
+		break;
+	}
+	if (bReadSuccess == false)
+	{
+		RawData.Empty();
+	}
+	return bReadSuccess;
+}
+
+void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
+{
+	UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
+
+	// Switch from HTTP to WebSocket
+
+	//FHttpModule* Http = &FHttpModule::Get();
+	if (TextureRenderTarget /*&&
+		Http && Http->IsHttpEnabled() */)
+	{
+		//FHttpRequestPtr Request = Http->CreateRequest();
+
+		if (TextureRenderTarget->GetFormat() != PF_B8G8R8A8)
+		{
+			EPixelFormat TextureFormat = TextureRenderTarget->GetFormat();
+			UE_LOG(LogTemp, Log, TEXT("Render Target is not in the expected format should be 'PF_B8G8R8A8' instead found '%s'!"),
+				GetPixelFormatString(TextureFormat));
+		}
+		else
+		{
+			check(TextureRenderTarget != nullptr);
+			FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
+			FIntPoint Size = RenderTarget->GetSizeXY();
+
+			TArray<uint8> RawData;
+			bool bSuccess = GetRawData(TextureRenderTarget, RawData);
+
+			IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+			TSharedPtr<IImageWrapper> PNGImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+
+			PNGImageWrapper->SetRaw(RawData.GetData(), RawData.GetAllocatedSize(), Size.X, Size.Y, ERGBFormat::BGRA, 8);
+
+			const TArray64<uint8>& PNGData = PNGImageWrapper->GetCompressed(100);
+
+			//Ar.Serialize((void*)PNGData.GetData(), PNGData.GetAllocatedSize());
+
+			if (bSuccess)
+			{
+				//Request->SetURL("ws://localhost:8080");
+
+				/*
+				Request->SetContent(data);
+
+				Request->OnProcessRequestComplete().BindUObject(this, &ARCCharacter::OnUploadRequestComplete);
+				if (!Request->ProcessRequest())
+				{
+					UE_LOG(LogTemp, Log, TEXT("HTTP failed to process request!"));
+				}
+				*/
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("HTTP module not available!"));
+	}
 }
