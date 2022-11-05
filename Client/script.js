@@ -21,6 +21,8 @@ function openFullscreen() {
   } else if (divFullScreen.msRequestFullscreen) { /* IE11 */
     divFullScreen.msRequestFullscreen();
   }
+  divFullScreen.style.cursor = 'none';
+  divFullScreen.requestPointerLock();
 }
 
 async function handleOnMessage(event) {
@@ -68,6 +70,12 @@ function connectStreamSocket() {
 }
 
 document.body.addEventListener('keydown', function (evt) {
+  //console.log(new Date(), 'keydown', evt.key);
+  if (evt.key == 'Escape') {
+    divFullScreen.style.cursor = '';
+    divFullScreen.exitPointerLock();
+    return;
+  }
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
@@ -96,6 +104,12 @@ document.body.addEventListener('keydown', function (evt) {
 });
 
 document.body.addEventListener('keyup', function (evt) {
+  //console.log(new Date(), 'keyup', evt.key);
+  if (evt.key == 'Escape') {
+    divFullScreen.style.cursor = '';
+    divFullScreen.exitPointerLock();
+    return;
+  }
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
@@ -152,11 +166,11 @@ setInterval(function () {
 
 divFullScreen.addEventListener('mousemove', function (evt) {
   //console.log('mouseover', evt.movementX, evt.movementY, evt);
-  mouseX += evt.movementX / 8;
+  mouseX += evt.movementX / 10;
   if (Number.isNaN(mouseX)) {
     mouseX = 0;
   }
-  mouseY += evt.movementY / 8;
+  mouseY += evt.movementY / 10;
   if (Number.isNaN(mouseY)) {
     mouseY = 0;
   }
