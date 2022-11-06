@@ -662,9 +662,31 @@ Image length 3239333
 
 * `send270pFull.js` sends `480x270` images as fast as possible resulting in `200+ FPS` in the browser. Multiple WebSockets can be used so that rendering and input have dedicated WebSockets.
 
+```
+node .\send270pFull.js 
+Image length 17480
+2022-11-06T17:45:16.530Z Connection opened 1
+2022-11-06T17:45:16.535Z Connection opened 0
+2022-11-06T17:45:16.536Z Connection opened 2
+2022-11-06T17:45:17.543Z Connection 1 Sent 1.43 MB
+2022-11-06T17:45:17.544Z Connection 0 Sent 1.4 MB
+2022-11-06T17:45:17.544Z Connection 2 Sent 1.4 MB
+```
+
 ![image_14](images/image_14.png)
 
-* `send270p60FPS.js` sends `480x270` images and is capped at `60 FPS` at `1 MB per second`.
+* `send270p60FPS.js` sends `480x270` images and is capped at `60 FPS` at `1 MB per second`. Multiple WebSockets or a single WebSocket can be used. `60 FPS` frame rates are attainable easily at this resolution.
+
+```
+node .\send270p60FPS.js
+Image length 17480
+2022-11-06T17:43:41.018Z Connection opened 1
+2022-11-06T17:43:41.021Z Connection opened 0
+2022-11-06T17:43:41.022Z Connection opened 2
+2022-11-06T17:43:42.034Z Connection 1 Sent 358.48 KB
+2022-11-06T17:43:42.035Z Connection 0 Sent 358.48 KB
+2022-11-06T17:43:42.036Z Connection 2 Sent 358.48 KB
+```
 
 ![image_15](images/image_15.png)
 
