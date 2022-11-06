@@ -56,7 +56,7 @@ function connectStreamSocket(name, index) {
       streamSockets[name] = undefined;
       setTimeout(function () {
         // reconnect after delay
-        connectStreamSocket();
+        connectStreamSocket(name, index);
       }, 5000);
     };
     streamSockets[name].onerror = function (error) {

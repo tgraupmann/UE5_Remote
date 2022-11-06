@@ -637,6 +637,37 @@ The images used to train AI models will influence the artist style of the upscal
 
 ![image_12](images/image_12.png)
 
+## Performance
+
+* `sendHD.js` can sends `hundreds of MB per second` and the browser can only receive around `10 FPS`. Reducing the file size of the image with more optimal compression, increases the browser FPS to `12`. Using multiple WebSockets does not increase the FPS in the browser. The browser seems to be throttled by `20+ MB per second`. Stopping the test shows the browser to continue buffering for several seconds.
+
+```
+node .\sendHD.js
+Image length 3239333
+2022-11-06T17:07:45.246Z Connection opened 0
+2022-11-06T17:07:45.249Z Connection opened 1
+2022-11-06T17:07:45.249Z Connection opened 2
+2022-11-06T17:07:46.257Z Connection 0 Sent 64.87 MB
+2022-11-06T17:07:46.258Z Connection 1 Sent 61.79 MB
+2022-11-06T17:07:46.259Z Connection 2 Sent 61.79 MB
+```
+
+* Sending HD full throttle can go up by hundreds of MB sent even though the receiving end is a fraction of that.
+
+```
+2022-11-06T17:22:55.982Z Connection 0 Sent 447.94 MB
+```
+
+![image_13](images/image_13.png)
+
+* `send270pFull.js` sends `480x270` images as fast as possible resulting in `200+ FPS` in the browser. Multiple WebSockets can be used so that rendering and input have dedicated WebSockets.
+
+![image_14](images/image_14.png)
+
+* `send270p60FPS.js` sends `480x270` images and is capped at `60 FPS` at `1 MB per second`.
+
+![image_15](images/image_15.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
