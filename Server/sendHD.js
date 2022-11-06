@@ -30,7 +30,7 @@ for (var i = 0; i < totalConnections; ++i) {
         refThis.dataPerSecond += data.length;
         //console.log(new Date(), 'Connection', refI, 'Data sent!', data.length, 'bytes');
 
-      }, 0);
+      }, 1000 / 60 * totalConnections * 0.8); // 60 FPS
 
       setInterval(function () {
         console.log(new Date(), 'Connection', refI, 'Sent', formatBytes(refThis.dataPerSecond));

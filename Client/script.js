@@ -40,30 +40,30 @@ async function handleOnMessage(event) {
   reader.readAsDataURL(data); // read the blob into a url
 }
 
-var streamSocket = null;
+var streamSockets = {};
 
-function connectStreamSocket() {
-  if (streamSocket == undefined) {
-    var url = "ws://localhost:8080";
-    streamSocket = new WebSocket(url);
-    streamSocket.onopen = function (event) {
+function connectStreamSocket(name, index) {
+  if (streamSockets[name] == undefined) {
+    var url = "ws://localhost:8080?i=" + index;
+    streamSockets[name] = new WebSocket(url);
+    streamSockets[name].onopen = function (event) {
       console.log(new Date(), 'WebSocket connected!', url);
-      streamSocket.onmessage = function (event) {
+      streamSockets[name].onmessage = function (event) {
         handleOnMessage(event);
       }
     };
-    streamSocket.onclose = function (event) {
-      streamSocket = undefined;
+    streamSockets[name].onclose = function (event) {
+      streamSockets[name] = undefined;
       setTimeout(function () {
         // reconnect after delay
         connectStreamSocket();
       }, 5000);
     };
-    streamSocket.onerror = function (error) {
+    streamSockets[name].onerror = function (error) {
       console.error('streamSocket error! ', error);
       setTimeout(function () {
         // reconnect after delay
-        connectStreamSocket();
+        connectStreamSocket(name, index);
       }, 5000);
     };
   }
@@ -76,6 +76,7 @@ document.body.addEventListener('keydown', function (evt) {
     divFullScreen.exitPointerLock();
     return;
   }
+  let streamSocket = streamSockets['main'];
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
@@ -110,6 +111,7 @@ document.body.addEventListener('keyup', function (evt) {
     divFullScreen.exitPointerLock();
     return;
   }
+  let streamSocket = streamSockets['main'];
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
@@ -144,6 +146,7 @@ var mouseY = undefined;
 
 // limit rate input events
 setInterval(function () {
+  let streamSocket = streamSockets['main'];
   if (!streamSocket || streamSocket.readyState != WebSocket.OPEN) {
     return; // connection closed
   }
@@ -176,4 +179,6 @@ divFullScreen.addEventListener('mousemove', function (evt) {
   }
 });
 
-connectStreamSocket();
+connectStreamSocket('main', 0);
+//connectStreamSocket('connection1', 1);
+//connectStreamSocket('connection2', 2);
