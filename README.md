@@ -753,6 +753,8 @@ Unreal is now sending `47 FPS`. Increasing the WebSockets doesn't seem to affect
 
 ![image_20](images/image_20.png)
 
+* The `47 FPS` could be capped by how long it takes to create the JPG image. It might be possible to send the `RenderTexture` in the native format and get the browser to decode that format.
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
