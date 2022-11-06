@@ -44,6 +44,17 @@ The [Unreal Remote Host](UE5_Remote/UE5_Remote.uproject) is an `UE5` project tha
 
 * [Server/sendHD.js](Server/sendHD.js) sends a HD image to the `WebSocket Server` to load test the browser.
 
+```
+node .\sendHD.js
+Image length 3239333
+2022-11-06T12:10:50.187Z Connection opened 0
+2022-11-06T12:10:50.216Z Connection opened 1
+2022-11-06T12:10:50.217Z Connection opened 2
+2022-11-06T12:10:51.223Z Connection 0 Sent 139.02 MB
+2022-11-06T12:10:51.246Z Connection 1 Sent 135.93 MB
+2022-11-06T12:10:51.247Z Connection 2 Sent 135.93 MB
+```
+
 ## Change Log
 
 * Added [UE5_Remote/Content/UI/BPWidget_UI.uasset](UE5_Remote/Content/UI/BPWidget_UI.uasset) - BP Widget
