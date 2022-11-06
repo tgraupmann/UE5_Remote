@@ -704,6 +704,10 @@ Image length 17480
 
 ![image_18](images/image_18.png)
 
+* Instead of using `EventTick`, now `BeginPlay` calls the `StartSendRenderTextureEvent` custom event. The event uses a delay that uses the `RefreshRate`. This simplifies the logic. Without the `SendRenderTexture` node the `TicksPerSecond` can hit `60 FPS`. The `SendRenderTexture` seems to be taking too long and slowing down the FPS. Setting `RefreshRate` to zero still hits `30 FPS` so either the WebSocket or RenderTexture is capping the rate.
+
+![image_19](images/image_19.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
