@@ -696,7 +696,7 @@ Image length 17480
 
 * Update the `RefreshRate` variable to `0.013`.
 
-* The `EventTick` appears to be capped at `30 FPS`.
+* The `EventTick` or `WebSocket` appears to be capped at `30 FPS`.
 
 ![image_17](images/image_17.png)
 
