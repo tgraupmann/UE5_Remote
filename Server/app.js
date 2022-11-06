@@ -19,20 +19,29 @@ wss.on('connection', function connection(ws, req) {
   console.log(new Date(), 'Connection opened', req.url);
   ws._socket.url = req.url; //save url on the socket
   ws.on('message', async function message(data) {
-    /*
     let json = tryJsonParse(data);
+    let input = false;
     if (json != undefined) {
-      console.log('onMessage:', ab2str(data));
+      input = true;
+      //console.log('onMessage:', ab2str(data));
     }
-    */
     //let count = 0;
     wss.clients.forEach(function each(client) {
       //console.log(new Date(), 'client', client._socket.url);
-      if (client._socket.url != '/?type=host') {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          //console.log(new Date(), 'Send data to client', client._socket.url, data.length, 'bytes');
-          client.send(data);
-          //++count;
+      if (input) {
+        if (client._socket.url == '/?type=input') {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            //console.log(new Date(), 'Send input to client', client._socket.url, data.length, 'bytes');
+            client.send(data);
+          }
+        }
+      } else {
+        if (client._socket.url.startsWith('/?i=')) {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            //console.log(new Date(), 'Send image to client', client._socket.url, data.length, 'bytes');
+            client.send(data);
+            //++count;
+          }
         }
       }
     });

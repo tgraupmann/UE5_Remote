@@ -47,7 +47,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USceneCaptureComponent2D* CaptureComp;
 
-	TSharedPtr<IWebSocket> WebSocket;
+	TArray<TSharedPtr<IWebSocket>> WebSockets;
+
+	int32 MaxRenderWebSockets;
+	int32 IndexWebSocket; //cycle WebSockets
 
 	bool InjectKeyW;
 	bool InjectKeyA;

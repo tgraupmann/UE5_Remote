@@ -21,6 +21,9 @@
 
 AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 {
+	MaxRenderWebSockets = 3;
+	IndexWebSocket = 0;
+
 	InjectKeyW = false;
 	InjectKeyA = false;
 	InjectKeyS = false;
@@ -201,7 +204,7 @@ void AUE5_RemoteCharacter::BeginPlay()
 		FModuleManager::Get().LoadModule("WebSockets");
 	}
 
-	WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080");
+	TSharedPtr<IWebSocket> WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080/?type=input");
 
 	WebSocket->OnConnected().AddLambda([]()
 		{
@@ -303,13 +306,25 @@ void AUE5_RemoteCharacter::BeginPlay()
 		});
 
 	WebSocket->Connect();
+	WebSockets.Add(WebSocket);
+
+	for (int index = 0; index < MaxRenderWebSockets; ++index)
+	{
+		TSharedPtr<IWebSocket> WebSocketAlt = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080/?type=render");
+		WebSocketAlt->Connect();
+		WebSockets.Add(WebSocketAlt);
+	}
 }
 
 void AUE5_RemoteCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (WebSocket->IsConnected())
+	for (int index = 0; index < WebSockets.Num(); ++index)
 	{
-		WebSocket->Close();
+		TSharedPtr<IWebSocket> WebSocket = WebSockets[index];
+		if (WebSocket->IsConnected())
+		{
+			WebSocket->Close();
+		}
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -342,6 +357,11 @@ void AUE5_RemoteCharacter::Tick(float DeltaTime)
 void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
 {
 	//UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
+
+	// The zero index is the input WebSocket
+
+	TSharedPtr<IWebSocket> WebSocket = WebSockets[IndexWebSocket + 1];
+	IndexWebSocket = (IndexWebSocket + 1) % MaxRenderWebSockets; // cycle between web sockets
 
 	if (WebSocket->IsConnected() && TextureRenderTarget)
 	{

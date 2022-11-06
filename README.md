@@ -708,6 +708,51 @@ Image length 17480
 
 ![image_19](images/image_19.png)
 
+Switch to an array of WebSockets.
+
+```C++
+TArray<TSharedPtr<IWebSocket>> WebSockets;
+int32 MaxRenderWebSockets;
+int32 IndexWebSocket; //cycle WebSockets
+```
+
+Initialize the index.
+
+```C++
+MaxRenderWebSockets = 3;
+IndexWebSocket = 0;
+```
+
+Input will be on its own socket.
+
+```C++
+TSharedPtr<IWebSocket> WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080/?type=input");
+```
+
+Initialize the new WebSockets.
+
+```C++
+for (int index = 0; index < MaxRenderWebSockets; ++index)
+{
+  TSharedPtr<IWebSocket> WebSocketAlt = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080/?type=render");
+  WebSocketAlt->Connect();
+  WebSockets.Add(WebSocketAlt);
+}
+```
+
+Cycle between the render WebSockets.
+
+```C+++
+// The zero index is the input WebSocket
+
+TSharedPtr<IWebSocket> WebSocket = WebSockets[IndexWebSocket + 1];
+IndexWebSocket = (IndexWebSocket + 1) % MaxRenderWebSockets; // cycle between web sockets
+```
+
+Unreal is now sending `47 FPS`. Increasing the WebSockets doesn't seem to affect the FPS. Having the input and rendering on separate `WebSockets` has a better design.
+
+![image_20](images/image_20.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.

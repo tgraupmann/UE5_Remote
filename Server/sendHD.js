@@ -11,7 +11,7 @@ console.log('Image length', data.length);
 
 for (var i = 0; i < totalConnections; ++i) {
 
-  const ws = new WebSocket('ws://localhost:8080?type=host');
+  const ws = new WebSocket('ws://localhost:8080/?type=render');
 
   const refI = i;
   ws.on('open', function open() {
