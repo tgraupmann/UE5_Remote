@@ -690,6 +690,16 @@ Image length 17480
 
 ![image_15](images/image_15.png)
 
+* Updated the [UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset](UE5_Remote/Content/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.uasset) - Event Graph
+
+![image_16](images/image_16.png)
+
+* Update the `RefreshRate` variable to `0.013`.
+
+* The `EventTick` appears to be capped at `30 FPS`.
+
+![image_17](images/image_17.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
