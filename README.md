@@ -620,6 +620,10 @@ Here you can see a example of output from [UpscalerJS](https://upscalerjs.com/).
 
 ![image_11](images/image_11.png)
 
+The images used to train AI models will influence the artist style of the upscaled images. In this case, the JPG compression marks in the upscale output from the pre-trained model look similar to hand painted artwork. For more information on training datasets take a look at [Image Super Resolution Datasets](https://paperswithcode.com/task/image-super-resolution).
+
+![image_12](images/image_12.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
