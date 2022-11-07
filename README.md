@@ -882,7 +882,9 @@ void AUE5_RemoteCharacter::StartWorkerSendRenderTexture()
 
 ## Compression
 
-* A quick test of the various compression libraries the `17KB JPG` can be compressed to `16.9KB` with `GZIP`.
+* A quick test using `7-zip` with the various compression options shows the `17KB JPG` can be compressed to `16.9KB` with `GZIP`.
+
+![image_23](images/image_23.png)
 
 ## Support
 
