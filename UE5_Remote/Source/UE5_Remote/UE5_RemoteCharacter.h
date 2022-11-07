@@ -31,23 +31,30 @@ public:
 	float TurnRateGamepad;
 
 	UFUNCTION(BlueprintCallable, Category = "Capture")
-	UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
+	void CreateRenderTarget(const int32 width, const int32 height);
 
 	UFUNCTION(BlueprintCallable, Category = "Capture")
-	void SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget);
+	void SendRenderTexture();
+
+	UFUNCTION(BlueprintCallable, Category = "Capture")
+	void StartWorkerSendRenderTexture();
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
+
+	bool WaitForExit;
 
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USceneCaptureComponent2D* CaptureComp;
 
-	TSharedPtr<IImageWrapper> ImageWrapper;
+	UTextureRenderTarget2D* RenderTarget;
 
 	TArray<uint8> RenderTextureRawData;
+
+	TSharedPtr<IImageWrapper> ImageWrapper;	
 
 	TArray<TSharedPtr<IWebSocket>> WebSockets;
 
@@ -96,3 +103,20 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
 
+class SendRenderTextureTask : public FNonAbandonableTask
+{
+public:
+	SendRenderTextureTask(AUE5_RemoteCharacter* Actor);
+
+	~SendRenderTextureTask();
+
+	FORCEINLINE TStatId GetStatId() const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(SendRenderTextureTask, STATGROUP_ThreadPoolAsyncTasks);
+	}
+
+	void DoWork();
+private:
+	AUE5_RemoteCharacter* Character;
+	bool WaitForExit;
+};

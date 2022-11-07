@@ -800,6 +800,86 @@ void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRend
 }
 ```
 
+* Optimize the chracter blueprint to prepare for multithreading. The render texture can just be a private data field. There's no need to pass it around in blueprints. Add a node to start an async worker that will render in and send in a thread.
+
+![image_22](images/image_22.png)
+
+* Create a `SendRenderTextureTask` class that extends `FNonAbandonableTask`.
+
+```C++
+class SendRenderTextureTask : public FNonAbandonableTask
+{
+public:
+ SendRenderTextureTask(AUE5_RemoteCharacter* Actor);
+
+ ~SendRenderTextureTask();
+
+ FORCEINLINE TStatId GetStatId() const
+ {
+  RETURN_QUICK_DECLARE_CYCLE_STAT(SendRenderTextureTask, STATGROUP_ThreadPoolAsyncTasks);
+ }
+
+ void DoWork();
+private:
+ AUE5_RemoteCharacter* Character;
+ bool WaitForExit;
+};
+```
+
+* Implement `SendRenderTextureTask`:
+
+```C++
+SendRenderTextureTask::SendRenderTextureTask(AUE5_RemoteCharacter* Actor)
+{
+ UE_LOG(LogTemp, Log, TEXT("SendRenderTextureTask()"));
+ Character = Actor;
+ WaitForExit = true;
+}
+
+SendRenderTextureTask::~SendRenderTextureTask()
+{
+ UE_LOG(LogTemp, Log, TEXT("~SendRenderTextureTask()"));
+ WaitForExit = false;
+}
+
+void SendRenderTextureTask::DoWork()
+{
+ const float RefreshRate = 1 / 60.0f * 0.4;
+ bool notStarted = true;
+ while (WaitForExit && Character->WaitForExit)
+ {
+  if (notStarted)
+  {
+   notStarted = false;
+   AsyncTask(ENamedThreads::GameThread, [this, &notStarted]() {
+    // code to execute on game thread here
+    Character->SendRenderTexture();
+    notStarted = true;
+   });
+  }
+
+  FWindowsPlatformProcess::Sleep(RefreshRate);
+ }
+}
+```
+
+There's a tricky balance here, where if the `RefreshRate` is too fast, rendering will queue up and playback will lag behind.
+
+Capturing the render texture data actually has to run on the `GameThread`.
+
+* `StartWorkerSendRenderTexture` spawns the background task to render and send to the WebSocket.
+
+```C++
+void AUE5_RemoteCharacter::StartWorkerSendRenderTexture()
+{
+ (new FAutoDeleteAsyncTask<SendRenderTextureTask>(this))->StartBackgroundTask();
+}
+```
+
+* By using `SendRenderTextureTask` the `60 FPS` frame rate has been reached.
+
+![image_21](images/image_21.png)
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.

@@ -14,12 +14,18 @@
 #include "WebSocketsModule.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
+#include "Misc/DateTime.h"
+#include "GenericPlatform/GenericPlatformProcess.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE5_RemoteCharacter
 
 AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 {
+	WaitForExit = true;
+
+	RenderTarget = nullptr;
+
 	IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
 
 	//ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::BMP); //crash probably too large
@@ -161,16 +167,18 @@ void AUE5_RemoteCharacter::MoveRight(float Value)
 	}
 }
 
-UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 width, const int32 height)
+void AUE5_RemoteCharacter::CreateRenderTarget(const int32 width, const int32 height)
 {
-	UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
+	RenderTarget = NewObject<UTextureRenderTarget2D>();
 
 	RenderTarget->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
 
 	RenderTarget->InitAutoFormat(width, height);
 	RenderTarget->UpdateResourceImmediate(true);
 
-	return RenderTarget;
+	RenderTarget->TargetGamma = 2.2f;
+
+	CaptureComp->TextureTarget = RenderTarget;
 }
 
 void AUE5_RemoteCharacter::BeginPlay()
@@ -296,6 +304,8 @@ void AUE5_RemoteCharacter::BeginPlay()
 
 void AUE5_RemoteCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	WaitForExit = false;
+
 	for (int index = 0; index < WebSockets.Num(); ++index)
 	{
 		TSharedPtr<IWebSocket> WebSocket = WebSockets[index];
@@ -332,24 +342,78 @@ void AUE5_RemoteCharacter::Tick(float DeltaTime)
 	}
 }
 
-void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
+void AUE5_RemoteCharacter::SendRenderTexture()
 {
 	//UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
 	// The zero index is the input WebSocket
 	TSharedPtr<IWebSocket> WebSocket = WebSockets[IndexWebSocket + 1];
 	IndexWebSocket = (IndexWebSocket + 1) % MaxRenderWebSockets; // cycle between web sockets
 
-	if (WebSocket->IsConnected() && TextureRenderTarget)
+	if (WebSocket->IsConnected() && RenderTarget)
 	{
-		check(TextureRenderTarget != nullptr);
-		FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
+		FRenderTarget* RenderTargetResource = RenderTarget->GameThread_GetRenderTargetResource();
 
-		bool bSuccess = RenderTarget->ReadPixelsPtr((FColor*)RenderTextureRawData.GetData());
+		bool bSuccess = RenderTargetResource->ReadPixelsPtr((FColor*)RenderTextureRawData.GetData());
 		if (bSuccess)
 		{
 			ImageWrapper->SetRaw(RenderTextureRawData.GetData(), RenderTextureRawData.GetAllocatedSize(), 480, 270, ERGBFormat::BGRA, 8);
 			const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(0); //smallest size
 			WebSocket->Send((void*)ImageData.GetData(), ImageData.GetAllocatedSize(), true);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("SendRenderTexture: WebSocket is not connected!"));
+	}
+}
+
+void AUE5_RemoteCharacter::StartWorkerSendRenderTexture()
+{
+	(new FAutoDeleteAsyncTask<SendRenderTextureTask>(this))->StartBackgroundTask();
+}
+
+SendRenderTextureTask::SendRenderTextureTask(AUE5_RemoteCharacter* Actor)
+{
+	//UE_LOG(LogTemp, Log, TEXT("SendRenderTextureTask()"));
+	Character = Actor;
+	WaitForExit = true;
+}
+
+SendRenderTextureTask::~SendRenderTextureTask()
+{
+	//UE_LOG(LogTemp, Log, TEXT("~SendRenderTextureTask()"));
+	WaitForExit = false;
+}
+
+void SendRenderTextureTask::DoWork()
+{
+	const float RefreshRate = 1 / 60.0f * 0.4;
+	//FDateTime LogTimer = FDateTime::Now();
+	//LogTimer += 1000;
+	bool notStarted = true;
+	while (WaitForExit && Character->WaitForExit)
+	{
+		if (notStarted)
+		{
+			notStarted = false;
+			AsyncTask(ENamedThreads::GameThread, [this, &notStarted]() {
+				// code to execute on game thread here
+				Character->SendRenderTexture();
+				notStarted = true;
+				//UE_LOG(LogTemp, Log, TEXT("SendRenderTexture completed!"));
+			});
+		}
+		/*
+		else
+		{
+			if (LogTimer < FDateTime::Now())
+			{
+				LogTimer = FDateTime::Now() + 1000;
+				UE_LOG(LogTemp, Log, TEXT("SendRenderTexture: is busy!"));
+			}
+		}
+		*/
+
+		FWindowsPlatformProcess::Sleep(RefreshRate);
 	}
 }

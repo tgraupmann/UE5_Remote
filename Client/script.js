@@ -165,7 +165,7 @@ setInterval(function () {
       mouseY = 0;
     }
   }
-}, 33);
+}, 1000 / 60);
 
 divFullScreen.addEventListener('mousemove', function (evt) {
   //console.log('mouseover', evt.movementX, evt.movementY, evt);
