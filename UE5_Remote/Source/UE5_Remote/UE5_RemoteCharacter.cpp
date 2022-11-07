@@ -9,7 +9,6 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "ImageUtils.h"
-#include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "RenderUtils.h"
 #include "WebSocketsModule.h"
@@ -21,7 +20,15 @@
 
 AUE5_RemoteCharacter::AUE5_RemoteCharacter()
 {
-	MaxRenderWebSockets = 3;
+	IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+	//ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::BMP); //crash probably too large
+	//ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG); // 10 FPS Max
+	ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::JPEG); // 30 FPS
+
+	RenderTextureRawData.AddUninitialized(480 * 270 * 4);
+
+	MaxRenderWebSockets = 2;
 	IndexWebSocket = 0;
 
 	InjectKeyW = false;
@@ -164,35 +171,6 @@ UTextureRenderTarget2D* AUE5_RemoteCharacter::CreateRenderTarget(const int32 wid
 	RenderTarget->UpdateResourceImmediate(true);
 
 	return RenderTarget;
-}
-
-// From: C:\Program Files\Epic Games\UE_4.21\Engine\Source\Runtime\Engine\Private\ImageUtils.cpp
-bool AUE5_RemoteCharacter::GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData)
-{
-	FRenderTarget* RenderTarget = TexRT->GameThread_GetRenderTargetResource();
-	EPixelFormat Format = TexRT->GetFormat();
-
-	int32 ImageBytes = CalculateImageBytes(TexRT->SizeX, TexRT->SizeY, 0, Format);
-	RawData.AddUninitialized(ImageBytes);
-	bool bReadSuccess = false;
-	switch (Format)
-	{
-	case PF_FloatRGBA:
-	{
-		TArray<FFloat16Color> FloatColors;
-		bReadSuccess = RenderTarget->ReadFloat16Pixels(FloatColors);
-		FMemory::Memcpy(RawData.GetData(), FloatColors.GetData(), ImageBytes);
-	}
-	break;
-	case PF_B8G8R8A8:
-		bReadSuccess = RenderTarget->ReadPixelsPtr((FColor*)RawData.GetData());
-		break;
-	}
-	if (bReadSuccess == false)
-	{
-		RawData.Empty();
-	}
-	return bReadSuccess;
 }
 
 void AUE5_RemoteCharacter::BeginPlay()
@@ -357,45 +335,21 @@ void AUE5_RemoteCharacter::Tick(float DeltaTime)
 void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
 {
 	//UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
-
 	// The zero index is the input WebSocket
-
 	TSharedPtr<IWebSocket> WebSocket = WebSockets[IndexWebSocket + 1];
 	IndexWebSocket = (IndexWebSocket + 1) % MaxRenderWebSockets; // cycle between web sockets
 
 	if (WebSocket->IsConnected() && TextureRenderTarget)
 	{
-		if (TextureRenderTarget->GetFormat() != PF_B8G8R8A8)
+		check(TextureRenderTarget != nullptr);
+		FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
+
+		bool bSuccess = RenderTarget->ReadPixelsPtr((FColor*)RenderTextureRawData.GetData());
+		if (bSuccess)
 		{
-			EPixelFormat TextureFormat = TextureRenderTarget->GetFormat();
-			UE_LOG(LogTemp, Log, TEXT("Render Target is not in the expected format should be 'PF_B8G8R8A8' instead found '%s'!"),
-				GetPixelFormatString(TextureFormat));
-		}
-		else
-		{
-			check(TextureRenderTarget != nullptr);
-			FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
-			FIntPoint Size = RenderTarget->GetSizeXY();
-
-			TArray<uint8> RawData;
-			bool bSuccess = GetRawData(TextureRenderTarget, RawData);
-
-			IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-
-			//TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::BMP); //crash probably too large
-			//TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG); // 10 FPS Max
-			TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::JPEG); // 30 FPS
-
-			ImageWrapper->SetRaw(RawData.GetData(), RawData.GetAllocatedSize(), Size.X, Size.Y, ERGBFormat::BGRA, 8);
-
-			//const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(100); //largest size
+			ImageWrapper->SetRaw(RenderTextureRawData.GetData(), RenderTextureRawData.GetAllocatedSize(), 480, 270, ERGBFormat::BGRA, 8);
 			const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(0); //smallest size
-
 			WebSocket->Send((void*)ImageData.GetData(), ImageData.GetAllocatedSize(), true);
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("HTTP module not available!"));
 	}
 }

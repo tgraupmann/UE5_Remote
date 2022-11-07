@@ -755,6 +755,51 @@ Unreal is now sending `47 FPS`. Increasing the WebSockets doesn't seem to affect
 
 * The `47 FPS` could be capped by how long it takes to create the JPG image. It might be possible to send the `RenderTexture` in the native format and get the browser to decode that format.
 
+* Move ImageWrapper and RawData allocation from the function to the class data members.
+
+```C++
+#include "IImageWrapper.h"
+```
+
+```C++
+TSharedPtr<IImageWrapper> ImageWrapper;
+TArray<uint8> RenderTextureRawData;
+```
+
+* Initialize the data members.
+
+```C++
+IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::JPEG); // 30 FPS
+RenderTextureRawData.AddUninitialized(480 * 270 * 4);
+```
+
+* Optimize the `SendRenderTexture` function.
+
+```C++
+void AUE5_RemoteCharacter::SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget)
+{
+ //UE_LOG(LogTemp, Log, TEXT("Client sending over WebSocket"));
+ // The zero index is the input WebSocket
+ TSharedPtr<IWebSocket> WebSocket = WebSockets[IndexWebSocket + 1];
+ IndexWebSocket = (IndexWebSocket + 1) % MaxRenderWebSockets; // cycle between web sockets
+
+ if (WebSocket->IsConnected() && TextureRenderTarget)
+ {
+  check(TextureRenderTarget != nullptr);
+  FRenderTarget* RenderTarget = TextureRenderTarget->GameThread_GetRenderTargetResource();
+
+  bool bSuccess = RenderTarget->ReadPixelsPtr((FColor*)RenderTextureRawData.GetData());
+  if (bSuccess)
+  {
+   ImageWrapper->SetRaw(RenderTextureRawData.GetData(), RenderTextureRawData.GetAllocatedSize(), 480, 270, ERGBFormat::BGRA, 8);
+   const TArray64<uint8>& ImageData = ImageWrapper->GetCompressed(0); //smallest size
+   WebSocket->Send((void*)ImageData.GetData(), ImageData.GetAllocatedSize(), true);
+  }
+ }
+}
+```
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.

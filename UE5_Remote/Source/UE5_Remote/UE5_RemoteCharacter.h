@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Engine/CanvasRenderTarget2D.h"
+#include "IImageWrapper.h"
 #include "IWebSocket.h"
 #include "UE5_RemoteCharacter.generated.h"
 
@@ -33,9 +34,6 @@ public:
 	UTextureRenderTarget2D* CreateRenderTarget(const int32 width, const int32 height);
 
 	UFUNCTION(BlueprintCallable, Category = "Capture")
-	bool GetRawData(UTextureRenderTarget2D* TexRT, TArray<uint8>& RawData);
-
-	UFUNCTION(BlueprintCallable, Category = "Capture")
 	void SendRenderTexture(UTextureRenderTarget2D* TextureRenderTarget);
 
 	virtual void BeginPlay() override;
@@ -46,6 +44,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USceneCaptureComponent2D* CaptureComp;
+
+	TSharedPtr<IImageWrapper> ImageWrapper;
+
+	TArray<uint8> RenderTextureRawData;
 
 	TArray<TSharedPtr<IWebSocket>> WebSockets;
 
