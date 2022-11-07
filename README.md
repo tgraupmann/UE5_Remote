@@ -886,6 +886,8 @@ void AUE5_RemoteCharacter::StartWorkerSendRenderTexture()
 
 ![image_23](images/image_23.png)
 
+* Even a `0.1KB` drop can shave off `6KB` per second.
+
 ## Support
 
 Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
