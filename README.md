@@ -8,6 +8,30 @@ This UE5 project uses a scene capture component on the character to send render 
 <a target="_blank" href="https://youtu.be/6XeScY7OwvY"><img src="https://img.youtube.com/vi/6XeScY7OwvY/0.jpg"></a>
 </div>
 
+## Quick Start
+
+* Start the WebSocket Server - NodeJS
+
+```cmd
+Server\Node_InstallServer.cmd
+Server\Node_StartServer.cmd
+```
+
+* Start the Browser Host - NodeJS
+
+```cmd
+Client\Node_InstallBrowserHost.cmd
+Client\Node_StartBrowserHost.cmd
+```
+
+* Open the browser: [http://localhost:8001/index.html](http://localhost:8001/index.html)
+
+* Launch the UE5 project
+
+```cmd
+UE5_Remote\UE5_Remote.uproject
+```
+
 ## Components
 
 ### WebSocket Server
