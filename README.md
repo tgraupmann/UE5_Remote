@@ -32,6 +32,17 @@ Client\Node_StartBrowserHost.cmd
 UE5_Remote\UE5_Remote.uproject
 ```
 
+## Unit Tests
+
+* With the server and client browser host running, you can run these unit tests to see if Unreal project will connect by sending test images. The browser will display summary information as the images are received.
+
+```cmd
+Server\UnitTest_Send720p60FPS.cmd
+Server\UnitTest_Send720pFull.cmd
+Server\UnitTest_SendHD.cmd
+Server\UnitTest_SendImage.cmd
+```
+
 ## Components
 
 ### WebSocket Server
