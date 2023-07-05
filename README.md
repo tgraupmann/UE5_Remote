@@ -32,6 +32,8 @@ Client\Node_StartBrowserHost.cmd
 UE5_Remote\UE5_Remote.uproject
 ```
 
+* Use keyboard input with `Shift` + `F1` to show the mouse cursor in the Unreal Editor to switch to the browser window while leaving the sample level playing.
+
 ## Unit Tests
 
 * With the server and client browser host running, you can run these unit tests to see if Unreal project will connect by sending test images. The browser will display summary information as the images are received.
