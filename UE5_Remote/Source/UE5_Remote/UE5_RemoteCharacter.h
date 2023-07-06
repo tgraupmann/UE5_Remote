@@ -47,6 +47,8 @@ public:
 
 protected:
 
+	void ProcessWebSocketMessage(const FString& MessageString);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USceneCaptureComponent2D* CaptureComp;
 
@@ -91,7 +93,6 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface

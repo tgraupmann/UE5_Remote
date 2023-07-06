@@ -16,6 +16,7 @@
 #include "Serialization/JsonReader.h"
 #include "Misc/DateTime.h"
 #include "GenericPlatform/GenericPlatformProcess.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUE5_RemoteCharacter
@@ -181,6 +182,90 @@ void AUE5_RemoteCharacter::CreateRenderTarget(const int32 width, const int32 hei
 	CaptureComp->TextureTarget = RenderTarget;
 }
 
+void AUE5_RemoteCharacter::ProcessWebSocketMessage(const FString& MessageString)
+{
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+	TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
+	if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
+	{
+		FString InputString;
+		if (JsonObject->TryGetStringField("input", InputString))
+		{
+			if (InputString.Equals("mouse"))
+			{
+				int32 X = JsonObject->GetIntegerField("x");
+				int32 Y = JsonObject->GetIntegerField("y");
+
+				AddControllerYawInput(X);
+				AddControllerPitchInput(Y);
+			}
+			else if (InputString.Equals("keydown"))
+			{
+				FString Key;
+				if (JsonObject->TryGetStringField("key", Key))
+				{
+					if (Key.Equals("w"))
+					{
+						InjectKeyW = true;
+					}
+					else if (Key.Equals("a"))
+					{
+						InjectKeyA = true;
+					}
+					else if (Key.Equals("s"))
+					{
+						InjectKeyS = true;
+					}
+					else if (Key.Equals("d"))
+					{
+						InjectKeyD = true;
+					}
+					else if (Key.Equals("space"))
+					{
+						if (!InjectKeySpace)
+						{
+							InjectKeySpace = true;
+							Jump();
+						}
+					}
+				}
+			}
+			else if (InputString.Equals("keyup"))
+			{
+				FString Key;
+				if (JsonObject->TryGetStringField("key", Key))
+				{
+					if (Key.Equals("w"))
+					{
+						InjectKeyW = false;
+					}
+					else if (Key.Equals("a"))
+					{
+						InjectKeyA = false;
+					}
+					else if (Key.Equals("s"))
+					{
+						InjectKeyS = false;
+					}
+					else if (Key.Equals("d"))
+					{
+						InjectKeyD = false;
+					}
+					else if (Key.Equals("space"))
+					{
+						InjectKeySpace = false;
+						StopJumping();
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
+	}
+}
+
 void AUE5_RemoteCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -191,6 +276,8 @@ void AUE5_RemoteCharacter::BeginPlay()
 	}
 
 	TSharedPtr<IWebSocket> WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080/?type=input");
+
+	WebSocket->SetTextMessageMemoryLimit(1024);
 
 	WebSocket->OnConnected().AddLambda([]()
 		{
@@ -207,89 +294,33 @@ void AUE5_RemoteCharacter::BeginPlay()
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, bWasClean ? FColor::Green : FColor::Red, "Connection closed " + Reason);
 		});
 
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2)
+
+	WebSocket->OnBinaryMessage().AddLambda([this](const void* Data, int32 Count, bool bIsLastFragment)
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Binary Message");
+			
+			FUTF8ToTCHAR Convert((const ANSICHAR*)Data, Count);
+			const TCHAR* PayloadChars = Convert.Get();
+			FString MessageString = PayloadChars;
+			int32 Index;
+			if (MessageString.FindChar('}', Index))
+			{
+				MessageString = MessageString.Mid(0, Index + 1);
+			}
+
+			ProcessWebSocketMessage(MessageString);
+		});
+
+#else
+
 	WebSocket->OnMessage().AddLambda([this](const FString& MessageString)
 		{
-			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
-			TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(MessageString);
-			if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
-			{
-				FString InputString;
-				if (JsonObject->TryGetStringField("input", InputString))
-				{
-					if (InputString.Equals("mouse"))
-					{
-						int32 X = JsonObject->GetIntegerField("x");
-						int32 Y = JsonObject->GetIntegerField("y");
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "Message");
 
-						AddControllerYawInput(X);
-						AddControllerPitchInput(Y);
-					}
-					else if (InputString.Equals("keydown"))
-					{
-						FString Key;
-						if (JsonObject->TryGetStringField("key", Key))
-						{
-							if (Key.Equals("w"))
-							{
-								InjectKeyW = true;
-							}
-							else if (Key.Equals("a"))
-							{
-								InjectKeyA = true;
-							}
-							else if (Key.Equals("s"))
-							{
-								InjectKeyS = true;
-							}
-							else if (Key.Equals("d"))
-							{
-								InjectKeyD = true;
-							}
-							else if (Key.Equals("space"))
-							{
-								if (!InjectKeySpace)
-								{
-									InjectKeySpace = true;
-									Jump();
-								}
-							}
-						}
-					}
-					else if (InputString.Equals("keyup"))
-					{
-						FString Key;
-						if (JsonObject->TryGetStringField("key", Key))
-						{
-							if (Key.Equals("w"))
-							{
-								InjectKeyW = false;
-							}
-							else if (Key.Equals("a"))
-							{
-								InjectKeyA = false;
-							}
-							else if (Key.Equals("s"))
-							{
-								InjectKeyS = false;
-							}
-							else if (Key.Equals("d"))
-							{
-								InjectKeyD = false;
-							}
-							else if (Key.Equals("space"))
-							{
-								InjectKeySpace = false;
-								StopJumping();
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, "OnMessage: " + MessageString);
-			}
+			ProcessWebSocketMessage(MessageString);
 		});
+#endif
 
 	WebSocket->Connect();
 	WebSockets.Add(WebSocket);
