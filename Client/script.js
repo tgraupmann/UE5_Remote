@@ -91,6 +91,7 @@ document.body.addEventListener('keydown', function (evt) {
         input: "keydown",
         key: evt.key
       });
+      console.log(new Date(), 'sendJson', sendJson);
       streamSocket.send(sendJson);
       break;
     case ' ':
@@ -99,6 +100,7 @@ document.body.addEventListener('keydown', function (evt) {
         input: "keydown",
         key: "space"
       });
+      console.log(new Date(), 'sendJson', sendJson);
       streamSocket.send(sendJson);
       break;
   }
