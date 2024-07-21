@@ -927,4 +927,4 @@ void AUE5_RemoteCharacter::StartWorkerSendRenderTexture()
 
 ## Support
 
-Support is available on Discord, you can reach me at `Tim Graupmann#0611`.
+Support is available on Discord, you can reach me at `tgraupmann`.
